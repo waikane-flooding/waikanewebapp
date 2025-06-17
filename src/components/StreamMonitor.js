@@ -196,7 +196,7 @@ const StreamMonitor = () => {
         </div>
       </div>
 
-      {/* Combined Overview */}
+      {/* Commenting out Combined Overview 
       <div className="component-card">
         <div className="card-header">
           <div className="card-icon">📊</div>
@@ -226,14 +226,8 @@ const StreamMonitor = () => {
             </div>
           </div>
         </div>
-        
-        {/* Combined Chart Placeholder */}
-        <div className="chart-placeholder">
-          📊 Combined Stream Heights Comparison
-          <br />
-          <small>Real-time comparison of both streams</small>
-        </div>
       </div>
+      */}
 
       {/* Stream Information */}
       <div className="component-card">
