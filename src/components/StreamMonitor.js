@@ -161,11 +161,11 @@ const StreamMonitor = () => {
         </div>
       </div>
 
-      {/* Waihōle Stream Monitor */}
+      {/* Waiahōle Stream Monitor */}
       <div className="component-card">
         <div className="card-header">
           <div className="card-icon">🌊</div>
-          <div className="card-title">Waihōle Stream Monitor</div>
+          <div className="card-title">Waiahōle Stream Monitor</div>
         </div>
         
         <div className="data-grid">
@@ -206,7 +206,7 @@ const StreamMonitor = () => {
         
         {/* Live Chart Placeholder */}
         <div className="chart-placeholder">
-          📊 Waihōle Stream Height Chart (24 hours)
+          📊 Waiahōle Stream Height Chart (24 hours)
           <br />
           <small>Real-time USGS gauge data visualization</small>
         </div>
