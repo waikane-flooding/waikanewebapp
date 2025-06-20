@@ -22,32 +22,44 @@ const StreamMonitor = () => {
     const generateMockData = () => {
       const now = new Date();
       
-      // Generate realistic stream height data (0-15 feet typical range)
-      const waikaneHeight = Math.max(0, Math.sin(now.getTime() / 2000000) * 8 + 4 + Math.random() * 2);
-      const waiholeHeight = Math.max(0, Math.sin(now.getTime() / 1800000) * 6 + 3.5 + Math.random() * 1.5);
+      // Base heights (typical normal conditions)
+      const baseWaikane = 3.5;  // Normal range 2.0-6.0 ft
+      const baseWaihole = 2.5;  // Normal range 1.5-5.0 ft
       
-      // Generate flow rates (cubic feet per second)
-      const waikaneFlow = waikaneHeight * 15 + Math.random() * 20;
-      const waiholeFlow = waiholeHeight * 12 + Math.random() * 15;
-      
+      // Add variation using time-based sine wave + random component
+      const waikaneHeight = baseWaikane + 
+        (Math.sin(now.getTime() / 3600000) * 1.5) + // hourly variation
+        (Math.random() * 0.5); // small random fluctuation
+    
+      const waiholeHeight = baseWaihole + 
+        (Math.sin(now.getTime() / 3600000) * 1.0) + // hourly variation
+        (Math.random() * 0.3); // small random fluctuation
+
+      // Ensure heights stay positive
+      const finalWaikaneHeight = Math.max(2.0, waikaneHeight);
+      const finalWaiholeHeight = Math.max(1.5, waiholeHeight);
+    
       // Determine status based on height
-      const getStatus = (height) => {
-        if (height > 10) return 'danger';
-        if (height > 7) return 'warning';
+      const getStatus = (height, isWaikane) => {
+        const floodStage = isWaikane ? 10.0 : 8.0;
+        const warningStage = isWaikane ? 7.0 : 6.0;
+      
+        if (height > floodStage) return 'danger';
+        if (height > warningStage) return 'warning';
         return 'safe';
       };
 
       setStreamData({
         waikane: {
-          height: waikaneHeight,
-          flow: waikaneFlow,
-          status: getStatus(waikaneHeight),
+          height: finalWaikaneHeight,
+          flow: finalWaikaneHeight * 15,
+          status: getStatus(finalWaikaneHeight, true),
           lastReading: now
         },
         waihole: {
-          height: waiholeHeight,
-          flow: waiholeFlow,
-          status: getStatus(waiholeHeight),
+          height: finalWaiholeHeight,
+          flow: finalWaiholeHeight * 12,
+          status: getStatus(finalWaiholeHeight, false),
           lastReading: now
         }
       });
@@ -66,8 +78,8 @@ const StreamMonitor = () => {
     // Initial load
     generateMockData();
     
-    // Update every 30 seconds
-    const interval = setInterval(generateMockData, 30000);
+    // Update more frequently (every 10 seconds)
+    const interval = setInterval(generateMockData, 10000);
     
     return () => clearInterval(interval);
   }, []);
