@@ -1,24 +1,77 @@
-import React, { useState } from 'react';
+//getting data from OpenWeatherMap API for Waikāne Valley, O'ahu
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const WeatherData = () => {
-  const [weatherData] = useState({
-    current: {
-      temp: 75,
-      humidity: 80,
-      windSpeed: 12,
-      rainfall: 0.2,
-      conditions: 'Partly Cloudy'
-    },
-    forecast: [
-      { day: 'Today', high: 78, low: 72, conditions: 'Partly Cloudy', rain: '30%' },
-      { day: 'Tomorrow', high: 79, low: 71, conditions: 'Scattered Showers', rain: '60%' },
-      { day: 'Wednesday', high: 77, low: 70, conditions: 'Rain', rain: '80%' },
-      { day: 'Thursday', high: 76, low: 71, conditions: 'Scattered Showers', rain: '50%' },
-      { day: 'Friday', high: 78, low: 72, conditions: 'Partly Cloudy', rain: '20%' },
-      { day: 'Saturday', high: 79, low: 73, conditions: 'Mostly Sunny', rain: '10%' },
-      { day: 'Sunday', high: 77, low: 71, conditions: 'Scattered Showers', rain: '40%' }
-    ]
-  });
+  const [weatherData, setWeatherData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Waikāne Valley coordinates
+  const lat = 21.4853;
+  const lon = -157.8445;
+  const API_KEY = '72fee9f945db2ce098f8f118758aa602';
+
+  useEffect(() => {
+    const fetchWeatherData = async () => {
+      try {
+        // Fetch current weather
+        const currentResponse = await axios.get(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial`
+        );
+
+        // Fetch 7-day forecast
+        const forecastResponse = await axios.get(
+          `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial`
+        );
+
+        // Process forecast data to get daily values
+        const dailyForecasts = {};
+        forecastResponse.data.list.forEach(item => {
+          const date = new Date(item.dt * 1000).toLocaleDateString();
+          if (!dailyForecasts[date]) {
+            dailyForecasts[date] = {
+              high: item.main.temp_max,
+              low: item.main.temp_min,
+              conditions: item.weather[0].main,
+              rain: item.pop * 100
+            };
+          } else {
+            dailyForecasts[date].high = Math.max(dailyForecasts[date].high, item.main.temp_max);
+            dailyForecasts[date].low = Math.min(dailyForecasts[date].low, item.main.temp_min);
+          }
+        });
+
+        setWeatherData({
+          current: {
+            temp: Math.round(currentResponse.data.main.temp),
+            humidity: currentResponse.data.main.humidity,
+            windSpeed: Math.round(currentResponse.data.wind.speed),
+            rainfall: currentResponse.data.rain ? currentResponse.data.rain['1h'] || 0 : 0,
+            conditions: currentResponse.data.weather[0].main
+          },
+          forecast: Object.entries(dailyForecasts).slice(0, 7).map(([date, data]) => ({
+            day: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }),
+            high: Math.round(data.high),
+            low: Math.round(data.low),
+            conditions: data.conditions,
+            rain: `${Math.round(data.rain)}%`
+          }))
+        });
+        setLoading(false);
+      } catch (err) {
+        console.error('Weather API Error:', err);
+        setError('Failed to fetch weather data');
+        setLoading(false);
+      }
+    };
+
+    fetchWeatherData();
+    // Refresh data every 30 minutes
+    const interval = setInterval(fetchWeatherData, 30 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [API_KEY, lat, lon]);
 
   const getWeatherIcon = (conditions) => {
     switch (conditions.toLowerCase()) {
@@ -30,6 +83,10 @@ const WeatherData = () => {
       default: return '☁️';
     }
   };
+
+  if (loading) return <div className="loading">Loading weather data...</div>;
+  if (error) return <div className="error">{error}</div>;
+  if (!weatherData) return null;
 
   return (
     <div className="weather-data">
